@@ -1,0 +1,1 @@
+--level 2 --risk 2 --exclude-sysdbs --timeout=10 --ignore-redirects --schema --batch --threads=5 --smart   --param-exclude='lightbox' --random-agent --technique=BEUSQ 

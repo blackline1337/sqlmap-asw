@@ -1,0 +1,1 @@
+--exclude-sysdbs --timeout=10 --ignore-redirects --schema --crawl=1 --batch --threads=5 --smart  --crawl-exclude='css' --crawl-exclude='.js' --crawl-exclude='wp-' --crawl-exclude='html' --crawl-exclude='=rss' --crawl-exclude='C=N;O=D' --crawl-exclude='lightbox' --param-exclude='lightbox' --random-agent --technique=BEUSQ 
