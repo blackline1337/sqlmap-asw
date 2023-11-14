@@ -9,8 +9,6 @@
 |_____|__   ||__||__|__|__|___._|   __|      |___._|_____|________|
          |__|                   |__|                               
 
-```
-```plaintext
 
 # We need a list of domains to scan
 https://github.com/danielmiessler/SecLists/raw/master/Miscellaneous/top-domains-majestic.csv.zip
