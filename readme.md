@@ -3,11 +3,12 @@
 # We need a list of domains to scan
 https://github.com/danielmiessler/SecLists/raw/master/Miscellaneous/top-domains-majestic.csv.zip
 
-# unzip the file and sort the entirety of the list
+# unzip the file and sort the entirety of the list *** This is to process the list of domains and save it to your own list ***
 unzip top-domains-majestic.csv.zip ; tail -n +2 top-domains-majestic.csv|head| cut -f3 -d, > majic.pre
 
-# now we can run surface.py to get a list of ips
-python surface.py --input_file majic.pre --start_line 
+# now we can run surface.py to get a list of ips *** this script will read top-domains-majestic.csv and sort it so no need for pre processing ***
+# 999986 will scan 20 domains 
+python surface.py --input_file top-domains-majestic.csv --start_line 999986
 
 # once we get the attack_surface.txt file we can sort it to remove duplicates
 python surface.py --sort_file

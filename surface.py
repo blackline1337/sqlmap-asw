@@ -9,11 +9,23 @@ from tqdm import tqdm
 def attack_surface(input_file, start_line):
     with open(input_file, 'r') as file:
         reader = csv.reader(file)
+        line_count = 0
+
+        # Skip lines up to the specified start_line
         for _ in range(start_line):
             next(reader)
+            line_count += 1
+
+        # Output the start_line count
+        print(f"Start line count: {line_count}")
+
+        # Read the remaining lines and store them in the data list
         data = [row for row in reader]
+        line_count += len(data)
 
     result = [row[2] for row in data]
+
+    print(f"Total lines read: {line_count}")
 
     return result
 
@@ -27,14 +39,15 @@ def shodan_query(domain):
         result = response.json()
 
         a_records = [entry['value'] for entry in result['data'] if entry.get('type') == 'A']
+        # leave this here for debugging
+        #print(f"{Fore.GREEN}[ Found results for - {Style.RESET_ALL}{domain}:{a_records} - Saving....")
 
-        print(f"{Fore.GREEN}[ Found results for - {Style.RESET_ALL}{domain} - Saving....")
-
-        return a_records
+        return a_records, True
 
     except requests.exceptions.RequestException as e:
-        print(f"{Fore.RED}Error: {domain} no results found!{Style.RESET_ALL}")
-        return []
+        #leave this here for debugging
+        #print(f"{Fore.RED}Error: {domain} no results found!{Style.RESET_ALL}")
+        return [], False
 
 def remove_duplicates(file_path):
     with open(file_path, 'r') as file:
@@ -61,17 +74,25 @@ def main():
     input_file = args.input_file
     result = attack_surface(input_file, args.start_line)
 
+    domains_found_count = 0  # Initialize the count of domains found
+
     with tqdm(total=len(result), desc="Processing Domains", unit="domain") as pbar:
         for domain in result:
-            a_records = shodan_query(domain)
-            if a_records:
+            a_records, domain_found = shodan_query(domain)
+            if domain_found:
+                domains_found_count += 1  # Increment the count of domains found
+
                 # Append the results to the file
                 with open('attack_surface.txt', 'a') as output_file:
                     output_file.write('\n'.join(a_records) + '\n')
-                    # print(f"{Fore.CYAN}Results appended to attack_surface.txt{Style.RESET_ALL}")
+                
             time.sleep(1.3)  # Introduce a delay of 1.2 seconds
             pbar.update(1)
-            pbar.set_postfix(remaining=len(result) - pbar.n, percent=(pbar.n / pbar.total) * 100)
+            pbar.set_postfix(remaining=len(result) - pbar.n, percent=(pbar.n / pbar.total) * 100, domains_found=domains_found_count)
+
+    print(f"Next run should process the last {len(result)} lines from the bottom")
+    print(f"Total domains found: {domains_found_count}")
 
 if __name__ == "__main__":
     main()
+
