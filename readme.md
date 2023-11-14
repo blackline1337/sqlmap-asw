@@ -1,4 +1,14 @@
-#sql_aggressive
+#
+# SQL Aggressive v0.0.10
+
+```plaintext
+
+              __                                                   
+.-----.-----.|  |.--------.---.-.-----.______.---.-.-----.--.--.--.
+|__ --|  _  ||  ||        |  _  |  _  |______|  _  |__ --|  |  |  |
+|_____|__   ||__||__|__|__|___._|   __|      |___._|_____|________|
+         |__|                   |__|                               
+
 ```
 # We need a list of domains to scan
 https://github.com/danielmiessler/SecLists/raw/master/Miscellaneous/top-domains-majestic.csv.zip
