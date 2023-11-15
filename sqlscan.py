@@ -19,25 +19,6 @@ async def check_sqlmap_api_status():
     except aiohttp.ClientError:
         return False
 
-async def check_ip(ip, progress_bar):
-    protocols = ['http', 'https']
-    live = False
-    
-    for protocol in protocols:
-        url = f'{protocol}://{ip}'
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url, timeout=5) as response:
-                    if response.status < 400:
-                        live = True
-                        break  # If any protocol is live, break out of the loop
-        except (asyncio.TimeoutError, aiohttp.ClientError):
-            continue  # Continue to the next protocol in case of timeout or client error
-    
-    progress_bar.update(ip, live)
-    return (ip, None) if not live else (ip, 200)  # Return (ip, None) if not live, otherwise (ip, 200)
-
-
 async def create_task_and_start_scan(ip, sqlmap_args, live_ips, progress_bar):
     # Check if SQLMap API is running before starting the scan
     api_running = await check_sqlmap_api_status()
@@ -98,10 +79,10 @@ class ProgressBar:
         self.live_count = 0
         self.scanned_count = 0
 
-    def update(self, ip, is_live):
+    def update(self, ip):
         self.progress += 1
         self.scanned_count += 1
-        self.live_count += 1 if is_live else 0
+        self.live_count += 1
         percent_complete = (self.progress / self.total) * 100
         print(f"\rScanning IPs: {ip} | Progress: {percent_complete:.2f}% | Targets Scanned: {self.scanned_count} | Live IPs: {self.live_count}", end='', flush=True)
         if self.progress == self.total:
@@ -110,7 +91,7 @@ class ProgressBar:
 async def main():
     parser = argparse.ArgumentParser(description='Asynchronous SQLMap scanner.')
     parser.add_argument('--args_file', type=str, help='Path to the file containing SQLMap arguments.')
-    parser.add_argument('--input_file', type=str, default='input_file.txt', help='Path to the input file containing target IPs.')
+    parser.add_argument('--input_file', type=str, default='live_ips.txt', help='Path to the file containing live target IPs.')
     args = parser.parse_args()
 
     # Check if SQLMap API is running
@@ -120,24 +101,12 @@ async def main():
         print("sqlmapapi -s -H '0.0.0.0'")
         return
 
-    target_ips = []
-    with open(args.input_file, 'r') as file:
-        target_ips = [line.strip() for line in file.readlines()]
-
     live_ips = []
-    progress_bar = ProgressBar(len(target_ips))
+    with open(args.input_file, 'r') as file:
+        live_ips = [line.strip() for line in file.readlines()]
 
-    # Use asyncio.gather to await the completion of the tasks
-    results = await asyncio.gather(*[check_ip(ip, progress_bar) for ip in target_ips])
-
-    with open('live.txt', 'w') as file:
-        for ip, _ in results:
-            if ip:
-                live_ips.append(ip)
-                file.write(f"{ip}\n")
-
-    scan_progress_bar = ProgressBar(len(live_ips))
-    scan_tasks = [create_task_and_start_scan(ip, args.args_file, live_ips, scan_progress_bar) for ip in live_ips]
+    progress_bar = ProgressBar(len(live_ips))
+    scan_tasks = [create_task_and_start_scan(ip, args.args_file, live_ips, progress_bar) for ip in live_ips]
     await asyncio.gather(*scan_tasks)
 
 if __name__ == "__main__":

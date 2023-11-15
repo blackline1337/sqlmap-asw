@@ -6,6 +6,7 @@ import argparse
 from colorama import Fore, Style
 from tqdm import tqdm
 
+
 def attack_surface(input_file, start_line):
     with open(input_file, 'r') as file:
         reader = csv.reader(file)
@@ -63,6 +64,7 @@ def main():
     parser = argparse.ArgumentParser(description='Process domains with Shodan.')
     parser.add_argument('--start_line', type=int, default=81478, help='Line number to start processing from')
     parser.add_argument('--sort_file', action='store_true', help='Sort and remove duplicates from the file')
+    parser.add_argument('--areyoualive', action='store_true', help='Checks if the ips are responsive i.e. 200 Status Code')
     parser.add_argument('--input_file', help='Read domains list')
     args = parser.parse_args()
 
@@ -70,6 +72,9 @@ def main():
         remove_duplicates('attack_surface.txt')
         print(f"{Fore.CYAN}Duplicates removed and file sorted{Style.RESET_ALL}")
         return  # Exit the script if --sort_file is provided
+    
+    if args.areyoualive:
+        areyoualive('attack_surface.txt')
 
     input_file = args.input_file
     result = attack_surface(input_file, args.start_line)
