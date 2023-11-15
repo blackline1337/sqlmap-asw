@@ -1,1 +1,0 @@
---exclude-sysdbs --timeout=10 --ignore-redirects --schema --batch --threads=8 --smart --random-agent --technique=EUSQ 

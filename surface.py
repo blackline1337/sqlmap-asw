@@ -83,7 +83,7 @@ def main():
                 domains_found_count += 1  # Increment the count of domains found
 
                 # Append the results to the file
-                with open('attack_surface.txt', 'a') as output_file:
+                with open('surface_output/attack_surface.txt', 'a') as output_file:
                     output_file.write('\n'.join(a_records) + '\n')
                 
             time.sleep(1.3)  # Introduce a delay of 1.2 seconds
