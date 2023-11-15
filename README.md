@@ -1,6 +1,7 @@
-#
-# SQL Aggressive v0.0.10
-
+# SQL  Aggressive v0.0.10
+```
+Wrapper for SQLMAP utilizing sqlmapapi and advanced attack surface generation techniques.
+```
 ```plaintext
 
               __                                                   
@@ -24,16 +25,16 @@ blackline@blacklinecyber:$ python surface.py --input_file top-domains-majestic.c
 blackline@blacklinecyber:$ python surface.py --sort_file
 
 # after we get attack_surface.txt we have to run it through httpx and save the output
-blackline@blacklinecyber:$ cat attack_surface.txt | httpx -o alive.txt
+blackline@blacklinecyber:$ cat surface_output/attack_surface.txt | httpx -o surface_output/alive.txt
 
 # now we can use filterx.py to sort the results so we dont have any duplicates
-blackline@blacklinecyber:$ python filterx.py --input_file alive.txt --output_file sorted.txt
+blackline@blacklinecyber:$ python filterx.py --input_file surface_output/alive.txt --output_file sqlmap_targets/sorted.txt
 
 # Now we can turn on the sqlmap api so that we can run sqlscan.py
 blackline@blacklinecyber:$ sqlmapapi -s -H "0.0.0.0"
 
 # running sqlscan.py will run sqlmap scans with the arguments you decide to use
-blackline@blacklinecyber:$ python sqlscan.py --input_file sorted.txt --args_file arguments/sqlmap_args.txt
+blackline@blacklinecyber:$ python sqlscan.py --input_file sqlmap_targets/sorted.txt --args_file arguments/sqlmap_args.txt
 
 
 ```

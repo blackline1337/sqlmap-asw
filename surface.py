@@ -1,4 +1,4 @@
-#sql_agressive glued together minimizing the amount of scripts required
+#wrapper of sql_agressive glued together minimizing the amount of scripts and commands and sorting required
 import csv
 import time
 import requests
@@ -69,12 +69,10 @@ def main():
     args = parser.parse_args()
 
     if args.sort_file:
-        remove_duplicates('attack_surface.txt')
+        remove_duplicates('surface_output/attack_surface.txt')
         print(f"{Fore.CYAN}Duplicates removed and file sorted{Style.RESET_ALL}")
         return  # Exit the script if --sort_file is provided
-    
-    if args.areyoualive:
-        areyoualive('attack_surface.txt')
+
 
     input_file = args.input_file
     result = attack_surface(input_file, args.start_line)

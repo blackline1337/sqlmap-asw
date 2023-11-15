@@ -91,7 +91,7 @@ class ProgressBar:
 async def main():
     parser = argparse.ArgumentParser(description='Asynchronous SQLMap scanner.')
     parser.add_argument('--args_file', type=str, help='Path to the file containing SQLMap arguments.')
-    parser.add_argument('--input_file', type=str, default='live_ips.txt', help='Path to the file containing live target IPs.')
+    parser.add_argument('--input_file', type=str, default='sqlmap_targets/sorted.txt', help='Path to the file containing live target IPs.')
     args = parser.parse_args()
 
     # Check if SQLMap API is running
