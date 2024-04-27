@@ -15,9 +15,12 @@ def sort_and_prioritize_http(input_file, output_file):
 
     # Prioritize HTTP over HTTPS
     sorted_ips = [f'http://{ip}' if protocol == 'http' else f'https://{ip}' for ip, protocol in ip_dict.items()]
-
+    
     with open(output_file, 'w') as file:
-        file.writelines(sorted_ips)
+        for sorted_ip in sorted_ips:
+            file.writelines(sorted_ip+"\n")
+
+
 
 def main():
     parser = argparse.ArgumentParser(description='Sort and prioritize IP addresses.')
