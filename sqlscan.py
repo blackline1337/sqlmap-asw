@@ -2,6 +2,7 @@ import aiohttp
 import asyncio
 import argparse
 from tqdm import tqdm
+import sqlite3
 
 MAX_CONCURRENT_SCANS = 2
 CHECK_STATUS_INTERVAL = 5
@@ -23,7 +24,7 @@ async def create_task_and_start_scan(ip, sqlmap_args, live_ips, progress_bar):
     # Check if SQLMap API is running before starting the scan
     api_running = await check_sqlmap_api_status()
     if not api_running:
-        print(f"SQLMap API is not running. Please start the SQLMap API and try again.")
+        tqdm.write(f"SQLMap API is not running. Please start the SQLMap API and try again.")
         return
 
     # Step 1: Create a new task and get the task ID
@@ -32,24 +33,24 @@ async def create_task_and_start_scan(ip, sqlmap_args, live_ips, progress_bar):
             response_data = await response.json()
             task_id = response_data.get('taskid', '')
             if not task_id:
-                print(f"Error creating a new task for {ip}.")
+                tqdm.write(f"Error creating a new task for {ip}.")
                 return
 
-            print(f"Started scan for {ip}. Task ID: {task_id}")
+            tqdm.write(f"Started scan for {ip}. Task ID: {task_id}")
 
     # Step 2: Start the scan for the specified URL with SQLMap arguments
     async with aiohttp.ClientSession() as session:
         with open(sqlmap_args, 'r') as args_file:
             sqlmap_arguments = args_file.read().strip()
-        scan_data = {'url': f'http://{ip} {sqlmap_arguments}'}
+        scan_data = {"url": f"{ip}/ {sqlmap_arguments}"}
         async with session.post(f'{SQLMAP_API_URL}/scan/{task_id}/start', json=scan_data) as response:
             response_data = await response.json()
             if not response_data.get('success', False):
-                print(f"Error starting scan for {ip}.")
+                tqdm.write(f"Error starting scan for {ip}.")
                 return
 
             engine_id = response_data.get('engineid', '')
-            print(f"Scan started for {ip}. Engine ID: {engine_id}")
+            #tqdm.write(f"Scan started for {ip}. Engine ID: {engine_id}")
 
     # Step 3: Check the status periodically until the scan is finished (terminated)
     while True:
@@ -57,13 +58,15 @@ async def create_task_and_start_scan(ip, sqlmap_args, live_ips, progress_bar):
         task_status = tasks_status.get(task_id, '')
 
         if task_status.lower() == 'terminated':
-            print(f"Scan for {ip} finished.")
+            # Write the ip and task_id to a MySQL SQLite database file ( work in progress)
+
+            tqdm.write(f"Scan for {ip} finished. - {task_id}")
             break
         else:
             await asyncio.sleep(CHECK_STATUS_INTERVAL)
 
     live_ips.append(ip)
-    progress_bar.update(ip)
+    progress_bar.update(1)
 
 async def get_tasks_status():
     async with aiohttp.ClientSession() as session:
@@ -71,22 +74,6 @@ async def get_tasks_status():
             response_data = await response.json()
             tasks = response_data.get('tasks', {})
             return tasks
-
-class ProgressBar:
-    def __init__(self, total):
-        self.total = total
-        self.progress = 0
-        self.live_count = 0
-        self.scanned_count = 0
-
-    def update(self, ip):
-        self.progress += 1
-        self.scanned_count += 1
-        self.live_count += 1
-        percent_complete = (self.progress / self.total) * 100
-        print(f"\rScanning IPs: {ip} | Progress: {percent_complete:.2f}% | Targets Scanned: {self.scanned_count} | Live IPs: {self.live_count}", end='', flush=True)
-        if self.progress == self.total:
-            print()  # Move to the next line after the progress is complete
 
 async def main():
     parser = argparse.ArgumentParser(description='Asynchronous SQLMap scanner.')
@@ -97,17 +84,18 @@ async def main():
     # Check if SQLMap API is running
     api_running = await check_sqlmap_api_status()
     if not api_running:
-        print("SQLMap API is not running. Please start the SQLMap API using the following command:")
-        print("sqlmapapi -s -H '0.0.0.0'")
+        tqdm.write("SQLMap API is not running. Please start the SQLMap API using the following command:")
+        tqdm.write("sqlmapapi -s -H '0.0.0.0'")
         return
 
     live_ips = []
     with open(args.input_file, 'r') as file:
         live_ips = [line.strip() for line in file.readlines()]
 
-    progress_bar = ProgressBar(len(live_ips))
+    progress_bar = tqdm(total=len(live_ips), desc="Scanning IPs", dynamic_ncols=True)
     scan_tasks = [create_task_and_start_scan(ip, args.args_file, live_ips, progress_bar) for ip in live_ips]
     await asyncio.gather(*scan_tasks)
+    progress_bar.close()
 
 if __name__ == "__main__":
     asyncio.run(main())
