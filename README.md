@@ -20,6 +20,7 @@
 
 
  We need a list of domains to scan
+ 
 `https://github.com/danielmiessler/SecLists/raw/master/Miscellaneous/top-domains-majestic.csv.zip`
 
 
