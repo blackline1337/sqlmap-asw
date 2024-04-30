@@ -31,6 +31,7 @@ def attack_surface(input_file, start_line):
     return result
 
 def shodan_query(domain):
+    # don't forget to add your API key or the script will only appear to work and you will get no results
     api_key = ""
     api_endpoint = f'https://api.shodan.io/dns/domain/{domain}?key={api_key}'
 

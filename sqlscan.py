@@ -4,6 +4,7 @@ import argparse
 from tqdm import tqdm
 import sqlite3
 
+# change this to how fast you want it, 2 is a good start increase if needed. 
 MAX_CONCURRENT_SCANS = 2
 CHECK_STATUS_INTERVAL = 5
 
@@ -36,7 +37,17 @@ async def create_task_and_start_scan(ip, sqlmap_args, live_ips, progress_bar):
                 tqdm.write(f"Error creating a new task for {ip}.")
                 return
 
-            tqdm.write(f"Started scan for {ip}. Task ID: {task_id}")
+            #tqdm.write(f"Started scan for {ip}. Task ID: {task_id}")
+            # if the ip is not in the database, add it
+            conn = sqlite3.connect('scans.db')
+            cursor = conn.cursor()
+            cursor.execute("CREATE TABLE IF NOT EXISTS scans (ip TEXT, task_id TEXT)")
+            cursor.execute("SELECT * FROM scans WHERE ip=?", (ip,))
+            result = cursor.fetchone()
+            if result is None:
+                cursor.execute("INSERT INTO scans (ip, task_id) VALUES (?, ?)", (ip, task_id))
+                conn.commit()
+            conn.close()
 
     # Step 2: Start the scan for the specified URL with SQLMap arguments
     async with aiohttp.ClientSession() as session:
@@ -58,9 +69,9 @@ async def create_task_and_start_scan(ip, sqlmap_args, live_ips, progress_bar):
         task_status = tasks_status.get(task_id, '')
 
         if task_status.lower() == 'terminated':
-            # Write the ip and task_id to a MySQL SQLite database file ( work in progress)
+            # Write the ip and task_id to a MySQL SQLite database file
 
-            tqdm.write(f"Scan for {ip} finished. - {task_id}")
+            #tqdm.write(f"Scan for {ip} finished. - {task_id}")
             break
         else:
             await asyncio.sleep(CHECK_STATUS_INTERVAL)
@@ -76,11 +87,24 @@ async def get_tasks_status():
             return tasks
 
 async def main():
-    parser = argparse.ArgumentParser(description='Asynchronous SQLMap scanner.')
+    # ASW BANNER
+    cool_banner = """
+
+                     ░▒▓██████▓▒░       ░▒▓███████▓▒░     ░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░ 
+                    ░▒▓█▓▒░░▒▓█▓▒░     ░▒▓█▓▒░            ░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░ 
+                    ░▒▓█▓▒░░▒▓█▓▒░     ░▒▓█▓▒░            ░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░ 
+                    ░▒▓████████▓▒░      ░▒▓██████▓▒░      ░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░ 
+                    ░▒▓█▓▒░░▒▓█▓▒░            ░▒▓█▓▒░     ░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░ 
+                    ░▒▓█▓▒░░▒▓█▓▒░            ░▒▓█▓▒░     ░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░ 
+                    ░▒▓█▓▒░░▒▓█▓▒░     ░▒▓███████▓▒░       ░▒▓█████████████▓▒░                                           
+
+                            [+]  Agressive SQLMAP Wrapper [+]
+    """
+    print(cool_banner)
+    parser = argparse.ArgumentParser(description='Agressive SQLMap Wrapper.')
     parser.add_argument('--args_file', type=str, help='Path to the file containing SQLMap arguments.')
     parser.add_argument('--input_file', type=str, default='sqlmap_targets/sorted.txt', help='Path to the file containing live target IPs.')
     args = parser.parse_args()
-
     # Check if SQLMap API is running
     api_running = await check_sqlmap_api_status()
     if not api_running:
@@ -91,7 +115,6 @@ async def main():
     live_ips = []
     with open(args.input_file, 'r') as file:
         live_ips = [line.strip() for line in file.readlines()]
-
     progress_bar = tqdm(total=len(live_ips), desc="Scanning IPs", dynamic_ncols=True)
     scan_tasks = [create_task_and_start_scan(ip, args.args_file, live_ips, progress_bar) for ip in live_ips]
     await asyncio.gather(*scan_tasks)
